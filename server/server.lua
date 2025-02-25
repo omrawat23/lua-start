@@ -52,13 +52,18 @@ local function GetPlayer(src)
       return nil
     end
   elseif Config.framework == "esx" then
-    local player = ESX.GetPlayerFromId(src)
-    if player then
-      print("GetPlayer (ESX) returned player:", player.identifier)
+    if ESX then
+      local player = ESX.GetPlayerFromId(src)
+      if player then
+        print("GetPlayer (ESX) returned player:", player.identifier)
+      else
+        print("GetPlayer (ESX) returned nil")
+      end
+      return player
     else
-      print("GetPlayer (ESX) returned nil")
+      print("ESX is nil")
+      return nil
     end
-    return player
   else
     print("Unsupported framework:", Config.framework)
     return nil
@@ -316,6 +321,7 @@ RegisterNetEvent("rental:removeRentalDocument", function(plate)
     for _, item in ipairs(items) do
       if item and item.info and item.info.plate == plate then
         RemoveItem(Player, item.name, 1, item.slot)
+
         if Config.framework == "qb" then
           TriggerClientEvent(
             "inventory:client:ItemBox",
@@ -323,6 +329,13 @@ RegisterNetEvent("rental:removeRentalDocument", function(plate)
             QBCore.Shared.Items[item.name],
             "remove"
           )
+        elseif Config.framework == "esx" then
+          if Config.Inventory == "ox" then
+            exports.ox_inventory:RemoveItem(src, item.name, 1, item.info)
+          else
+            -- Default ESX inventory handling
+            TriggerClientEvent('esx:showNotification', src, "Rental document removed")
+          end
         end
         break
       end
